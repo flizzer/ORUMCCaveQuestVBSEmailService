@@ -163,6 +163,7 @@
     </Content>
     <Content Include="Metadata\deploymentTemplates\apiappconfig.azureresource.json" />
     <Content Include="apiapp.json" />
+    <None Include="Properties\PublishProfiles\ORUMCCaveQuestVBSEmailService%28orumccavequestvbs%29 %282%29.pubxml" />
     <None Include="Properties\PublishProfiles\ORUMCCaveQuestVBSEmailService%28ORUMCCaveQuestVBS%29.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
