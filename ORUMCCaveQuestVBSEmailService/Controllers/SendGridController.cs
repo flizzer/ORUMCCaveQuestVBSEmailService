@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -20,11 +21,20 @@ namespace ORUMCCaveQuestVBSEmailService.Controllers
 
         public void SendEmail(string parentDestEmailAddress, string childName, string childUniqueId)
         {
+            Trace.TraceInformation("Incoming Parent Email Address: " + parentDestEmailAddress);
+            Trace.TraceInformation("Incoming Child Name: " + childName);
+            Trace.TraceInformation("Incoming Storage URL: " + childUniqueId);
             _childName = childName;
             InitializeTransport();
             GetCommonEmailSettings();
-            SendParentEmail(parentDestEmailAddress);
-            SendDirectorEmail(childUniqueId);
+            CreateParentEmail(parentDestEmailAddress);
+            CreateDirectorEmail(childUniqueId);
+        }
+
+        private void InitializeTransport()
+        {
+            var APIKey = Environment.GetEnvironmentVariable("SENDGRID_APIKEY");
+            _transportWeb = new Web(APIKey);
         }
 
         private void GetCommonEmailSettings()
@@ -34,7 +44,7 @@ namespace ORUMCCaveQuestVBSEmailService.Controllers
             _emailSubject = ConfigurationManager.AppSettings["EmailSubject"];
         }
 
-        private void SendParentEmail(string parentDestEmailAddress)
+        private void CreateParentEmail(string parentDestEmailAddress)
         {
             var email = new SendGridMessage();
             email.AddTo(parentDestEmailAddress);
@@ -46,16 +56,10 @@ namespace ORUMCCaveQuestVBSEmailService.Controllers
 Have a blessed day!
  
 The ORUMC Cave Quest VBS Team";
-            _transportWeb.DeliverAsync(email);
+            DeliverMail(email);
         }
 
-        private void InitializeTransport()
-        {
-            var APIKey = Environment.GetEnvironmentVariable("SENDGRID_APIKEY");
-            _transportWeb =  new Web(APIKey);
-        }
-
-        private void SendDirectorEmail(string childUniqueId)
+        private void CreateDirectorEmail(string childUniqueId)
         {
             var email = new SendGridMessage();
             email.AddTo(ConfigurationManager.AppSettings["DirectorEmailAddress"]);
@@ -67,7 +71,21 @@ The ORUMC Cave Quest VBS Team";
             var emailBody = @"A new child has been registered for this year's VBS.  Use this link if you would like to view his or her information:
 {0}";
             email.Text = string.Format(emailBody, childUniqueURL);
-            _transportWeb.DeliverAsync(email);
+            DeliverMail(email);
+        }
+
+        private void DeliverMail(SendGridMessage email)
+        {
+            try
+            {
+                _transportWeb.DeliverAsync(email);
+                Trace.TraceInformation(email.ToString());
+            }
+            catch (Exception exception)
+            {
+                Trace.TraceError(exception.Message);
+                Trace.TraceError(exception.StackTrace);
+            }
         }
     }
 }
